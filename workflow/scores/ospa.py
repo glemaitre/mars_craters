@@ -6,7 +6,7 @@ import numpy as np
 from rampwf.score_types.base import BaseScoreType
 
 from ..iou import cc_iou as iou
-
+from .precision_recall import _match_tuples
 
 def score_craters_on_patch(y_true, y_pred):
     """
@@ -89,12 +89,15 @@ def ospa(x_arr, y_arr, cut_off=1):
         return cut_off
 
     # OSPA METRIC
-    iou_score = 0
-    permutation_indices = itertools.permutations(range(n), m)
-    for idx in permutation_indices:
-        new_dist = sum(iou(x_arr[:, j], y_arr[:, idx[j]])
-                       for j in range(m))
-        iou_score = max(iou_score, new_dist)
+    # iou_score = 0
+    # permutation_indices = itertools.permutations(range(n), m)
+    # for idx in permutation_indices:
+    #     new_dist = sum(iou(x_arr[:, j], y_arr[:, idx[j]])
+    #                    for j in range(m))
+    #     iou_score = max(iou_score, new_dist)
+
+    idxs_true, idxs_pred, ious = _match_tuples(x_arr.T.tolist(), y_arr.T.tolist())
+    iou_score = ious.sum()
 
     distance_score = m - iou_score
     cardinality_score = cut_off * (n - m)
