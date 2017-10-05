@@ -1,8 +1,11 @@
 from itertools import repeat
 
+import numpy as np
+
 from sklearn.base import BaseEstimator
 from skimage.feature import blob_doh
 from mahotas.features import zernike_moments
+from mahotas.features import surf
 
 from .iou import cc_iou
 
@@ -50,8 +53,17 @@ class BlobExtractor(BaseEstimator, ExtractorMixin):
 
         patch = X[y_min:y_max, x_min:x_max]
 
-        # compute zernike moments
-        return zernike_moments(patch, radius)
+        # compute Zernike moments
+        zernike = zernike_moments(patch, radius)
+
+        # compute SURF descriptor
+        keypoint = np.array([[y, x, 1, 0.1, 1]])
+        surf_descriptor = surf.descriptors(patch, keypoint,
+                                           is_integral=False).ravel()
+        if not surf_descriptor.size:
+            surf_descriptor = np.zeros((70, ))
+
+        return np.hstack((zernike, surf_descriptor))
 
     def extract(self, X, y=None, **fit_params):
         candidate_blobs = blob_doh(X, min_sigma=self.min_radius,

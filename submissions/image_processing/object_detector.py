@@ -8,7 +8,7 @@ from imblearn.ensemble import BalancedBaggingClassifier
 from .extraction import BlobExtractor
 
 
-class CraterDetector(object):
+class ObjectDetector(object):
     def __init__(self, extractor=None, estimator=None, n_jobs=1):
         self.extractor = extractor
         self.estimator = estimator
