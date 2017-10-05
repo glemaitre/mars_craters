@@ -57,7 +57,7 @@ class ObjectDetector(object):
     def predict(self, X):
         # extract the data for the current image
         data, location, _, idx_cand_to_img = self._extract_features(
-            X, [None] * len(X))
+            X, [None for _ in range(len(X))])
 
         # classify each candidate
         y_pred = self.estimator_.predict_proba(data)
