@@ -28,7 +28,7 @@ class CraterDetector(object):
                 data.append(np.vstack(candidate[0]))
                 location += candidate[1]
                 target += candidate[2]
-                idx_cand_to_img.append(img_idx)
+                idx_cand_to_img += [img_idx] * len(candidate[1])
         # convert to numpy array the data needed to feed the classifier
         data = np.concatenate(data)
         target = np.array(target)

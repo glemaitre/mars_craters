@@ -1,7 +1,5 @@
 from itertools import repeat
 
-import numpy as np
-
 from sklearn.base import BaseEstimator
 from skimage.feature import blob_doh
 from mahotas.features import zernike_moments
