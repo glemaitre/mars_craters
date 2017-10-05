@@ -6,7 +6,7 @@ from sklearn.base import BaseEstimator
 from skimage.feature import blob_doh
 from mahotas.features import zernike_moments
 
-from ..iou import cc_iou
+from .iou import cc_iou
 
 
 class ExtractorMixin(object):
@@ -20,7 +20,7 @@ class ExtractorMixin(object):
             return self.fit(X, y, **fit_params).extract(X, y)
 
 
-class BlobDetector(BaseEstimator, ExtractorMixin):
+class BlobExtractor(BaseEstimator, ExtractorMixin):
 
     def __init__(self, min_radius=5, max_radius=40, blob_threshold=0.01,
                  overlap=0.5, padding=1.2, iou_threshold=0.5):
@@ -65,18 +65,26 @@ class BlobDetector(BaseEstimator, ExtractorMixin):
         candidate_blobs = [tuple(blob) for blob in candidate_blobs]
 
         # extract feature to be returned
-        features = np.array([self._extract_features(X, blob)
-                             for blob in candidate_blobs])
+        features = [self._extract_features(X, blob)
+                    for blob in candidate_blobs]
 
         if y is None:
             # branch used during testing
-            return features, candidate_blobs
+            return features, candidate_blobs, [None] * len(features)
+        elif not y:
+            # branch if there is no crater in the image
+            labels = [0] * len(candidate_blobs)
+
+            return features, candidate_blobs, labels
         else:
+            # case the we did not detect any blobs
+            if not len(features):
+                return ([], [], [])
+
             # find the maximum scores between each candidate and the
             # ground-truth
-            scores_candidates = [max(map(cc_iou,
-                                         repeat(target, len(candidate_blobs)),
-                                         candidate_blobs)) for target in y]
+            scores_candidates = [max(map(cc_iou, repeat(blob, len(y)), y))
+                                 for blob in candidate_blobs]
 
             # threshold the scores
             labels = [0 if score < self.iou_threshold else 1
