@@ -21,18 +21,19 @@ class CraterDetector(object):
             for image, craters in zip(X, y))
 
         # organize the data to fit it inside the classifier
-        data, location, target = [], [], []
-        for candidate in data_extracted:
+        data, location, target, idx_cand_to_img = [], [], [], []
+        for img_idx, candidate in enumerate(data_extracted):
             # check if this is an empty features
             if len(candidate[0]):
                 data.append(np.vstack(candidate[0]))
                 location += candidate[1]
                 target += candidate[2]
+                idx_cand_to_img.append(img_idx)
         # convert to numpy array the data needed to feed the classifier
         data = np.concatenate(data)
         target = np.array(target)
 
-        return data, location, target
+        return data, location, target, idx_cand_to_img
 
     def fit(self, X, y):
         if self.extractor is None:
@@ -46,7 +47,7 @@ class CraterDetector(object):
             self.estimator_ = clone(self.estimator)
 
         # extract the features for the training data
-        data, _, target = self._extract_features(X, y)
+        data, _, target, _ = self._extract_features(X, y)
 
         # fit the underlying classifier
         self.estimator_.fit(data, target)
@@ -55,12 +56,17 @@ class CraterDetector(object):
 
     def predict(self, X):
         # extract the data for the current image
-        data, location, _ = self._extract_features(X, [None] * len(X))
+        data, location, _, idx_cand_to_img = self._extract_features(
+            X, [None] * len(X))
 
         # classify each candidate
         y_pred = self.estimator_.predict_proba(data)
 
         # organize the output
+        output = [[] for _ in range(len(X))]
         crater_idx = np.flatnonzero(self.estimator_.classes_ == 1)[0]
-        return [(crater[0], crater[1], crater[2], prediction[crater_idx])
-                for crater, prediction in zip(location, y_pred)]
+        for crater, pred, img_idx in zip(location, y_pred, idx_cand_to_img):
+            output[img_idx].append((crater[0], crater[1], crater[2],
+                                    pred[crater_idx]))
+
+        return output
