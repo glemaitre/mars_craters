@@ -22,14 +22,14 @@ class ExtractorMixin(object):
 
 class BlobDetector(BaseEstimator, ExtractorMixin):
 
-    def __init__(self, min_radius=5, max_radius=40, threshold=0.01,
-                 overlap=0.5, padding=1.2, confidence_level=0.5):
+    def __init__(self, min_radius=5, max_radius=40, blob_threshold=0.01,
+                 overlap=0.5, padding=1.2, iou_threshold=0.5):
         self.min_radius = min_radius
         self.max_radius = max_radius
-        self.threshold = threshold
+        self.blob_threshold = blob_threshold
         self.overlap = overlap
         self.padding = padding
-        self.confidence_level = confidence_level
+        self.iou_threshold = iou_threshold
 
     def fit(self, X, y=None, **fit_params):
         # This extractor does not require any fitting
@@ -58,7 +58,7 @@ class BlobDetector(BaseEstimator, ExtractorMixin):
     def extract(self, X, y=None, **fit_params):
         candidate_blobs = blob_doh(X, min_sigma=self.min_radius,
                                    max_sigma=self.max_radius,
-                                   threshold=self.threshold,
+                                   threshold=self.blob_threshold,
                                    overlap=self.overlap)
 
         # convert the candidate to list of tuple
@@ -79,7 +79,7 @@ class BlobDetector(BaseEstimator, ExtractorMixin):
                                          candidate_blobs)) for target in y]
 
             # threshold the scores
-            labels =  [0 if score < self.confidence_level else 1
-                       for score in scores_candidates]
+            labels = [0 if score < self.iou_threshold else 1
+                      for score in scores_candidates]
 
             return features, candidate_blobs, labels
