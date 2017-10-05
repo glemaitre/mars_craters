@@ -62,5 +62,5 @@ class CraterDetector(object):
 
         # organize the output
         crater_idx = np.flatnonzero(self.estimator_.classes_ == 1)[0]
-        return [(crater[0], crater[1], crater[2], prediction)
-                for crater, prediction in zip(location, y_pred[crater_idx])]
+        return [(crater[0], crater[1], crater[2], prediction[crater_idx])
+                for crater, prediction in zip(location, y_pred)]
