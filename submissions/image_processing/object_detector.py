@@ -117,25 +117,25 @@ class BlobExtractor(BaseEstimator, ExtractorMixin):
 
     Parameters
     ----------
-    min_radius : int, (default=5)
+    min_radius : int, default=5
         The minimum radius of the candidate to be detected.
 
-    max_radius : int, (default=40)
+    max_radius : int, default=40
         The maximum radius of the candidate to be detected.
 
-    blob_threshold : float, (default=0.01)
+    blob_threshold : float, default=0.01
         The threshold used to extract the candidate region in the DoH map.
         Values above this threshold will be considered as a ROI.
 
-    overlap : float, (default=0.5)
+    overlap : float, default=0.5
         A value between 0 and 1. If the area of two blobs overlaps by a
         fraction greater than threshold, the smaller blob is eliminated.
 
-    padding : float, (default=1.2)
+    padding : float, default=1.2
         The region around the blob will be enlarged by the factor given in
         padding.
 
-    iou_threshold : float, (default=0.5)
+    iou_threshold : float, default=0.5
         A value between 0 and 1. If the IOU between the candidate and the
         target is greater than this threshold, the candidate is considered as a
         crater.
@@ -226,6 +226,32 @@ class BlobExtractor(BaseEstimator, ExtractorMixin):
 
 
 class ObjectDetector(object):
+    """Object detector.
+
+    Object detector using an extractor (which is used to extract feature) and
+    an estimator.
+
+    Parameters
+    ----------
+    extractor : object, default=BlobDetector()
+        The feature extractor used before to train the estimator.
+
+    estimator : object, default=BalancedBaggingClassifier()
+        The estimator used to decide if a candidate is a crater or not.
+
+    n_jobs : int, default=1
+        The number of workers to use to extract the blob candidate.
+
+    Attributes
+    ----------
+    extractor_ : object,
+        The actual extractor used after fit.
+
+    estimator_ : object,
+        The actual estimator used after fit.
+
+    """
+
     def __init__(self, extractor=None, estimator=None, n_jobs=1):
         self.extractor = extractor
         self.estimator = estimator
