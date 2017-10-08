@@ -109,6 +109,38 @@ class ExtractorMixin(object):
 
 
 class BlobExtractor(BaseEstimator, ExtractorMixin):
+    """Feature extractor using a blob detector.
+
+    This extractor will detect candidate regions using a blob detector,
+    i.e. maximum of the determinant of Hessian, and will extract the Zernike's
+    moments and SURF descriptors for each regions.
+
+    Parameters
+    ----------
+    min_radius : int, (default=5)
+        The minimum radius of the candidate to be detected.
+
+    max_radius : int, (default=40)
+        The maximum radius of the candidate to be detected.
+
+    blob_threshold : float, (default=0.01)
+        The threshold used to extract the candidate region in the DoH map.
+        Values above this threshold will be considered as a ROI.
+
+    overlap : float, (default=0.5)
+        A value between 0 and 1. If the area of two blobs overlaps by a
+        fraction greater than threshold, the smaller blob is eliminated.
+
+    padding : float, (default=1.2)
+        The region around the blob will be enlarged by the factor given in
+        padding.
+
+    iou_threshold : float, (default=0.5)
+        A value between 0 and 1. If the IOU between the candidate and the
+        target is greater than this threshold, the candidate is considered as a
+        crater.
+
+    """
 
     def __init__(self, min_radius=5, max_radius=40, blob_threshold=0.01,
                  overlap=0.5, padding=1.2, iou_threshold=0.5):
