@@ -8,7 +8,7 @@ import numpy as np
 from joblib import Parallel, delayed
 
 from sklearn.base import clone, BaseEstimator
-from imblearn.ensemble import BalancedBaggingClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 
 from skimage.feature import blob_doh
 from mahotas.features import zernike_moments
@@ -236,7 +236,7 @@ class ObjectDetector(object):
     extractor : object, default=BlobDetector()
         The feature extractor used before to train the estimator.
 
-    estimator : object, default=BalancedBaggingClassifier()
+    estimator : object, default=GradientBoostingClassifier()
         The estimator used to decide if a candidate is a crater or not.
 
     n_jobs : int, default=1
@@ -259,9 +259,8 @@ class ObjectDetector(object):
 
     def _extract_features(self, X, y):
         # extract feature for all the image containing craters
-        data_extracted = Parallel(n_jobs=self.n_jobs)(
-            delayed(self.extractor_.fit_extract)(image, craters)
-            for image, craters in zip(X, y))
+        data_extracted = [self.extractor_.fit_extract(image, craters)
+                          for image, craters in zip(X, y)]
 
         # organize the data to fit it inside the classifier
         data, location, target, idx_cand_to_img = [], [], [], []
@@ -285,7 +284,7 @@ class ObjectDetector(object):
             self.extractor_ = clone(self.extractor)
 
         if self.estimator is None:
-            self.estimator_ = BalancedBaggingClassifier(n_jobs=self.n_jobs)
+            self.estimator_ = GradientBoostingClassifier(n_estimators=100)
         else:
             self.estimator_ = clone(self.estimator)
 
