@@ -5,8 +5,6 @@ from itertools import repeat
 
 import numpy as np
 
-from joblib import Parallel, delayed
-
 from sklearn.base import clone, BaseEstimator
 from sklearn.ensemble import GradientBoostingClassifier
 
@@ -239,9 +237,6 @@ class ObjectDetector(object):
     estimator : object, default=GradientBoostingClassifier()
         The estimator used to decide if a candidate is a crater or not.
 
-    n_jobs : int, default=1
-        The number of workers to use to extract the blob candidate.
-
     Attributes
     ----------
     extractor_ : object,
@@ -252,10 +247,9 @@ class ObjectDetector(object):
 
     """
 
-    def __init__(self, extractor=None, estimator=None, n_jobs=1):
+    def __init__(self, extractor=None, estimator=None):
         self.extractor = extractor
         self.estimator = estimator
-        self.n_jobs = n_jobs
 
     def _extract_features(self, X, y):
         # extract feature for all the image containing craters
