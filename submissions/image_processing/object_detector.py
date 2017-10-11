@@ -222,7 +222,7 @@ class ObjectDetector(object):
             output[img_idx].append((pred[crater_idx],
                                     crater[0], crater[1], crater[2]))
 
-        return output
+        return np.array(output, dtype=object)
 
 ###############################################################################
 # IOU function
