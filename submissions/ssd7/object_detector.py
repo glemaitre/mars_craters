@@ -6,10 +6,6 @@ import numpy as np
 
 from sklearn.utils import Bunch
 
-import os
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
-
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 
@@ -52,8 +48,11 @@ class ObjectDetector(object):
 
     def fit(self, X, y):
         
+        ### TEMP - for showcase load weights (this is not possible
+        # for an actual submission)
         self.model_.load_weights('submissions/ssd7/ssd7_0_weights.h5')
         return
+        ###
         
         # build the box encoder to later encode y to make usable in the model
         ssd_box_encoder = SSDBoxEncoder(
