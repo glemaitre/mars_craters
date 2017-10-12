@@ -191,7 +191,7 @@ class ObjectDetector(object):
                            n_neg_min=params_model.n_neg_min,
                            alpha=params_model.alpha)
 
-        model.compile(optimizer=adam, loss=ssd_loss)
+        model.compile(optimizer=adam, loss=ssd_loss.compute_loss)
 
         return model, params_model, predictor_sizes
 
