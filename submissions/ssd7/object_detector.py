@@ -87,7 +87,7 @@ class ObjectDetector(object):
         self.model_.fit_generator(
             generator=train_generator,
             steps_per_epoch=ceil(n_train_samples / self.batch_size),
-            epochs=self.epochs,
+            epochs=self.epoch,
             callbacks=callbacks,
             validation_data=val_generator,
             validation_steps=ceil(n_val_samples / self.batch_size))
