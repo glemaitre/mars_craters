@@ -40,7 +40,7 @@ class ObjectDetector(object):
     """
 
     def __init__(self, batch_size=32, epoch=50, model_check_point=True):
-        self.model_, self.params_model_, self.predictor_size = \
+        self.model_, self.params_model_, self.predictor_sizes = \
             self._build_model()
         self.batch_size = batch_size
         self.epoch = epoch
