@@ -40,7 +40,8 @@ def ObjectDetector(object):
     """
 
     def __init__(self, batch_size=32, epoch=50, model_check_point=True):
-        self.model_, self.params_model_, self.predictor_size = _build_model()
+        self.model_, self.params_model_, self.predictor_size = \
+            self._build_model()
         self.batch_size = batch_size
         self.epoch = epoch
         self.model_check_point = model_check_point
@@ -129,7 +130,7 @@ def ObjectDetector(object):
         y_pred = self.model_.predict(np.expand_dims(X, -1))
         # only the 15 best candidate will be kept
         y_pred_decoded = decode_y(y_pred, top_k=15, input_coords='centroids')
-        return np.array([_anchor_to_circle(x, pred=True)
+        return np.array([self._anchor_to_circle(x, pred=True)
                          for x in y_pred_decoded])
 
     ###########################################################################
@@ -166,11 +167,10 @@ def ObjectDetector(object):
 
         return params_model
 
-    @staticmethod
-    def _build_model():
+    def _build_model(self):
 
         # load the parameter for the SSD model
-        params_model = _init_params_model()
+        params_model = self._init_params_model()
 
         model, predictor_sizes = build_model(
             image_size=(params_model.img_height,
