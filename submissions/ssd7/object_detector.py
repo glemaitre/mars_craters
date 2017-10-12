@@ -14,7 +14,7 @@ from ssd_keras.keras_ssd_loss import SSDLoss
 from ssd_keras.ssd_box_encode_decode_utils import SSDBoxEncoder, decode_y
 
 
-def ObjectDetector(object):
+class ObjectDetector(object):
     """Object detector.
 
     Parameters
