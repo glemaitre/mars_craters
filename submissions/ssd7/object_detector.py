@@ -6,6 +6,10 @@ import numpy as np
 
 from sklearn.utils import Bunch
 
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 
@@ -47,6 +51,10 @@ class ObjectDetector(object):
         self.model_check_point = model_check_point
 
     def fit(self, X, y):
+        
+        self.model_.load_weights('submissions/ssd7/ssd7_0_weights.h5')
+        return
+        
         # build the box encoder to later encode y to make usable in the model
         ssd_box_encoder = SSDBoxEncoder(
             img_height=self.params_model_.img_height,
@@ -57,6 +65,7 @@ class ObjectDetector(object):
             max_scale=self.params_model_.max_scale,
             scales=self.params_model_.scales,
             aspect_ratios_global=self.params_model_.aspect_ratios,
+            two_boxes_for_ar1=self.params_model_.two_boxes_for_ar1,
             pos_iou_threshold=0.5,
             neg_iou_threshold=0.2)
 
@@ -288,6 +297,5 @@ class BatchGeneratorBuilder(object):
                            for y_patch in y_batch]
 
                 y_batch_encoded = self.ssd_box_encoder.encode_y(y_batch)
-                print(y_batch_encoded.shape)
 
                 yield np.array(X_batch), y_batch_encoded
