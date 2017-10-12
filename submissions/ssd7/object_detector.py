@@ -288,5 +288,6 @@ class BatchGeneratorBuilder(object):
                            for y_patch in y_batch]
 
                 y_batch_encoded = self.ssd_box_encoder.encode_y(y_batch)
+                print(y_batch_encoded.shape)
 
                 yield np.array(X_batch), y_batch_encoded
