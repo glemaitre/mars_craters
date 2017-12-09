@@ -69,10 +69,10 @@ class BlobExtractor(BaseEstimator):
         padded_radius = int(self.padding * radius)
 
         # compute the coordinate of the patch to select
-        x_min = min(x - padded_radius, 0)
-        y_min = min(y - padded_radius, 0)
-        x_max = max(x + padded_radius, X.shape[0] - 1)
-        y_max = max(y + padded_radius, X.shape[1] - 1)
+        x_min = max(x - padded_radius, 0)
+        y_min = max(y - padded_radius, 0)
+        x_max = min(x + padded_radius, X.shape[0] - 1)
+        y_max = min(y + padded_radius, X.shape[1] - 1)
 
         patch = X[y_min:y_max, x_min:x_max]
 
