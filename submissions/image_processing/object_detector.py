@@ -80,8 +80,9 @@ class BlobExtractor(BaseEstimator):
         zernike = zernike_moments(patch, radius)
 
         # compute SURF descriptor
-        keypoint = np.array([[y, x, 1, 0.1, 1]])
-        surf_descriptor = surf.descriptors(patch, keypoint,
+        scale_surf = radius / self.min_radius
+        keypoint = np.array([[x, y, scale_surf, 0.1, 1]])
+        surf_descriptor = surf.descriptors(X, keypoint,
                                            is_integral=False).ravel()
         if not surf_descriptor.size:
             surf_descriptor = np.zeros((70, ))
