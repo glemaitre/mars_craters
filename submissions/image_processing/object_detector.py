@@ -81,7 +81,7 @@ class BlobExtractor(BaseEstimator):
 
         # compute SURF descriptor
         scale_surf = radius / self.min_radius
-        keypoint = np.array([[x, y, scale_surf, 0.1, 1]])
+        keypoint = np.array([[y, x, scale_surf, 0.1, 1]])
         surf_descriptor = surf.descriptors(X, keypoint,
                                            is_integral=False).ravel()
         if not surf_descriptor.size:
