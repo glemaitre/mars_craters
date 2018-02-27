@@ -3,15 +3,51 @@ from itertools import repeat
 import math
 import numpy as np
 
+from joblib import Parallel, delayed
+
 from sklearn.base import clone, BaseEstimator
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_extraction.image import extract_patches
 
 from skimage.feature import blob_doh
 from skimage.transform import resize, integral_image
 from skimage.feature import haar_like_feature_coord, haar_like_feature
 
 from mahotas.features import zernike_moments, surf
+
+
+def _extract_features(X, candidate, padding, resized, feature_type,
+                      feature_coord):
+
+        row, col, radius = int(candidate[0]), int(candidate[1]), int(
+            candidate[2])
+        padded_radius = int(padding * radius)
+
+        # compute the coordinate of the patch to select
+        col_min = max(col - padded_radius, 0)
+        row_min = max(row - padded_radius, 0)
+        col_max = min(col + padded_radius, X.shape[0] - 1)
+        row_max = min(row + padded_radius, X.shape[1] - 1)
+
+        # extract patch
+        patch = X[row_min:row_max, col_min:col_max]
+        resized_patch = resize(patch, (resized, resized))
+
+        # compute Zernike moments
+        zernike = zernike_moments(patch, radius)
+
+        # compute surf descriptors
+        scale_surf = 2 * padding * radius / 20
+        keypoint = np.array([[row, col, scale_surf, 0.1, 1]])
+        surf_descriptor = surf.descriptors(X, keypoint,
+                                           is_integral=False).ravel()
+        if not surf_descriptor.size:
+            surf_descriptor = np.zeros((70,))
+
+        # compute haar-like features
+        haar_features = extract_feature_image(resized_patch, feature_type,
+                                              feature_coord)
+
+        return np.hstack((zernike, surf_descriptor, haar_features))
 
 
 class BlobExtractor(BaseEstimator):
@@ -152,8 +188,11 @@ class BlobExtractor(BaseEstimator):
                     labels += [0 if score < self.iou_threshold else 1
                                for score in scores_candidates]
             candidates += candidate_blobs
-            features += [self._extract_features(image, blob) for blob in
-                         candidate_blobs]
+            features += Parallel(n_jobs=-1)(
+                delayed(_extract_features)(image, blob, self.padding,
+                                           self.resized, self.feature_type,
+                                           self.feature_coord)
+                for blob in candidate_blobs)
             idx_image += [idx] * len(candidate_blobs)
 
         return idx_image, features, candidates, labels
@@ -208,11 +247,11 @@ class BlobExtractor(BaseEstimator):
                                                               self.resized,
                                                               feature_types)
 
-        data = []
-        for i in range(sample_patches.shape[0]):
-            features = extract_feature_image(sample_patches[i], feature_types,
-                                             feature_coord=None)
-            data.append(features)
+        data = Parallel(n_jobs=-1)(
+            delayed(extract_feature_image)(sample_patches[i],
+                                           feature_types,
+                                           feature_coord=None)
+            for i in range(sample_patches.shape[0]))
         data = np.array(data)
 
         max_feat = min(200, data.shape[1])
@@ -231,39 +270,6 @@ class BlobExtractor(BaseEstimator):
         selected_feature_type = feature_type[idx_sorted[:significant_feature]]
 
         return selected_feature_coord, selected_feature_type
-
-    def _extract_features(self, X, candidate):
-
-        row, col, radius = int(candidate[0]), int(candidate[1]), int(
-            candidate[2])
-        padded_radius = int(self.padding * radius)
-
-        # compute the coordinate of the patch to select
-        col_min = max(col - padded_radius, 0)
-        row_min = max(row - padded_radius, 0)
-        col_max = min(col + padded_radius, X.shape[0] - 1)
-        row_max = min(row + padded_radius, X.shape[1] - 1)
-
-        # extract patch
-        patch = X[row_min:row_max, col_min:col_max]
-        resized_patch = resize(patch, (self.resized, self.resized))
-
-        # compute Zernike moments
-        zernike = zernike_moments(patch, radius)
-
-        # compute surf descriptors
-        scale_surf = 2 * self.padding * radius / 20
-        keypoint = np.array([[row, col, scale_surf, 0.1, 1]])
-        surf_descriptor = surf.descriptors(X, keypoint,
-                                           is_integral=False).ravel()
-        if not surf_descriptor.size:
-            surf_descriptor = np.zeros((70,))
-
-        # compute haar-like features
-        haar_features = extract_feature_image(resized_patch, self.feature_type,
-                                              self.feature_coord)
-
-        return np.hstack((zernike, surf_descriptor, haar_features))
 
 
 class ObjectDetector(object):
