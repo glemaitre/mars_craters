@@ -14,6 +14,8 @@ from skimage.feature import haar_like_feature_coord, haar_like_feature
 
 from mahotas.features import zernike_moments, surf
 
+from rampwf.prediction_types.detection import _greedy_nms
+
 
 def _extract_features(X, candidate, padding, resized, feature_type,
                       feature_coord):
@@ -188,7 +190,7 @@ class BlobExtractor(BaseEstimator):
                     labels += [0 if score < self.iou_threshold else 1
                                for score in scores_candidates]
             candidates += candidate_blobs
-            features += Parallel(n_jobs=-1)(
+            features += Parallel(n_jobs=10)(
                 delayed(_extract_features)(image, blob, self.padding,
                                            self.resized, self.feature_type,
                                            self.feature_coord)
@@ -247,11 +249,10 @@ class BlobExtractor(BaseEstimator):
                                                               self.resized,
                                                               feature_types)
 
-        data = Parallel(n_jobs=-1)(
-            delayed(extract_feature_image)(sample_patches[i],
-                                           feature_types,
-                                           feature_coord=None)
-            for i in range(sample_patches.shape[0]))
+        data = [extract_feature_image(sample_patches[i],
+                                      feature_types,
+                                      feature_coord=None)
+                for i in range(sample_patches.shape[0])]
         data = np.array(data)
 
         max_feat = min(200, data.shape[1])
@@ -297,11 +298,12 @@ class ObjectDetector(object):
     """
 
     def __init__(self, extractor=None, estimator=None,
-                 patch_size=11, patch_step=3):
+                 patch_size=11, patch_step=3, predict_threshold=0.2):
         self.extractor = extractor
         self.estimator = estimator
         self.patch_size = patch_size
         self.patch_step = patch_step
+        self.predict_threshold = predict_threshold
 
     def _extract_features(self, X, y):
         if y is None:
@@ -348,21 +350,26 @@ class ObjectDetector(object):
 
         return self
 
-    def predict(self, X):
+    def _predict(self, image):
         # extract the data for the current image
-        features, candidates, idx_image = self._extract_features(X, None)
+        features, candidates, _ = self._extract_features(
+                np.array([image]), None)
 
         # classify each candidate
         y_pred = self.estimator_.predict_proba(features)[:, 1]
 
+        output = [(probability, predicted_crater[0],
+                   predicted_crater[1], predicted_crater[2])
+                  for predicted_crater, probability in zip(candidates, y_pred)
+                  if probability > self.predict_threshold]
+        return _greedy_nms(output, 0.005)
+
+    def predict(self, X):
         # organize the output
         output = [[] for _ in range(len(X))]
-        for predicted_crater, probability, idx in zip(candidates, y_pred,
-                                                      idx_image):
-            if probability != 0:
-                output[idx].append(
-                    (probability, predicted_crater[0], predicted_crater[1],
-                     predicted_crater[2]))
+
+        output = Parallel(n_jobs=-1)(delayed(self._predict)(image)
+                                     for image in X)
 
         return np.array(output, dtype=object)
 
